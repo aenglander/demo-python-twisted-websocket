@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Server with Sockets - Twisted Examples</title>
+    <script type="text/javascript">
+        var socket = null,
+            isopen = false;
+
+        function createSocket() {
+
+            socket = new WebSocket("ws://" + document.location.hostname + ":" +  document.location.port + "/socket");
+            socket.binaryType = "arraybuffer";
+
+            socket.onopen = function () {
+                console.log("Connected!");
+                isopen = true;
+            };
+
+            socket.onmessage = function (e) {
+                if (typeof e.data == "string") {
+                    var messageItem, messageText;
+                    console.log("Text message received: " + e.data);
+                    messageText = document.createTextNode(e.data);
+                    messageItem = document.createElement('li');
+                    messageItem.appendChild(messageText);
+                    document.getElementById('message-list').appendChild(messageItem)
+                } else {
+                    var arr = new Uint8Array(e.data);
+                    var hex = '';
+                    for (var i = 0; i < arr.length; i++) {
+                        hex += ('00' + arr[i].toString(16)).substr(-2);
+                    }
+                    console.log("Binary message received: " + hex);
+                }
+            };
+
+            socket.onclose = function (e) {
+                console.log("Connection closed.");
+                socket = null;
+                isopen = false;
+                window.setTimeout(createSocket, 100);
+            }
+        }
+
+        function send(message) {
+            if (isopen) {
+                socket.send(message);
+                console.log("Message sent: " + message);
+            } else {
+                console.log("Connection not opened.")
+            }
+        }
+
+        function sendBinary() {
+            if (isopen) {
+                var buf = new ArrayBuffer(32);
+                var arr = new Uint8Array(buf);
+                for (i = 0; i < arr.length; ++i) arr[i] = i;
+                socket.send(buf);
+                console.log("Binary message sent.");
+            } else {
+                console.log("Connection not opened.")
+            }
+        }
+
+        window.onload = createSocket;
+    </script>
+</head>
+<body>
+<h1>Twisted Chat Example</h1>
+
+<h2>Messages</h2>
+<form onsubmit="var input = document.getElementById('message'); send(input.value); input.value=null; return false;">
+    <input id="message" name="message"> <input type="submit" value="Send">
+</form>
+<ul id="message-list">
+</ul>
+
+</body>
+</html>

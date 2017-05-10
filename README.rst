@@ -11,7 +11,7 @@ Installing the Example
 
 .. code-block::
 
-    python setup.py install
+    python setup.py develop
 
 Running the Example
 -------------------
